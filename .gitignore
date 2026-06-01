@@ -1,0 +1,18 @@
+# Sub-repositories — each maintains its own git history & remote
+gassienCalcul/
+gassienCalculFront/
+gassienInitBdd/
+gassienProxy/
+makerServerless/
+stocks/
+
+# Workspace-local audits / sensitive analyses — non versionnés
+Audit/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Node
+node_modules/
