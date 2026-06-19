@@ -52,6 +52,7 @@ admin/
 - **Build** : Webpack 4 + Babel
 - **State** : useReducer + Context API
 - **Auth** : AWS Amplify (Cognito)
+- **3D** : Three.js (r0.169) — viewer 3D des compositions Maker (bouton « 3D »), assets servis par le backend depuis `gassienCalcul/public/gassien/`. Détails : `gassienCalculFront/CLAUDE.md` → « Maker / Aperçu 3D ».
 
 ## Infrastructure AWS
 
