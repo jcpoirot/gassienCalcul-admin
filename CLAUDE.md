@@ -620,12 +620,18 @@ pm2 restart gassien-bo
 ```
 
 ### DynamoDB local issues
+DynamoDB Local tourne via Docker (image arm64 native), données dans `~/Database/DynamoDBLocal`.
 ```bash
 # Vérifier DynamoDB local running
-ps aux | grep dynamodb
+docker ps --filter ancestor=amazon/dynamodb-local
 # Start si nécessaire
-java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb
+cd gassienInitBdd
+npm run start_local
 ```
+- Erreur `failed to connect to the docker API at unix:///Users/jcpoirot/.docker/run/docker.sock` → Docker Desktop n'est pas lancé (`open -a Docker`)
+- Tables vides → mauvaise access key : DynamoDB Local sépare les données par access key + région (fichier `<AccessKeyId>_eu-west-1.db`), utiliser le profil `default`
+- Mise à jour de l'image (`docker pull amazon/dynamodb-local`) → migration SQLite irréversible à la 1ʳᵉ ouverture : sauvegarder `~/Database/DynamoDBLocal` avant
+- Détails : `gassienInitBdd/README.md`
 
 ### Stocks pas à jour
 ```bash
