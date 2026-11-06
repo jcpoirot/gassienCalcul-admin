@@ -57,11 +57,12 @@ admin/
 ## Infrastructure AWS
 
 ### Services utilisés
-- **Lightsail** : Instance Ubuntu 24.04 (52.47.115.90)
+- **Lightsail** : Instance Ubuntu 24.04 (35.181.0.241)
 - **Cognito** : Auth users (pool: eu-west-1_mX9ktt0u2) **NE PAS MODIFIER**
 - **DynamoDB** : Tables STOCKS, QUOTATION, INVOICE, MAKER
 - **S3** : Buckets gassien-cmd-config, gassien-invoices-lock
-- **Load Balancer** : Terminaison HTTPS
+- **IP statique** : `StaticIp-Paris-1` (35.181.0.241) attachée à `GassienAdmin2026`
+- **HTTPS** : Nginx + Let's Encrypt directement sur l'instance (plus de Load Balancer depuis 2026-11-06)
 
 ### Régions
 - **eu-west-1** (Ireland) : DynamoDB, Cognito, S3
@@ -113,7 +114,7 @@ pm2 reload gassien-bo            # Zero-downtime reload
 ```
 
 ### Git bare repository
-**Remote** : `ubuntu@52.47.115.90:/var/repo/gassien.git`
+**Remote** : `ubuntu@35.181.0.241:/var/repo/gassien.git`
 **Checkout** : `/var/www/gassien`
 
 ### PM2 Configuration
@@ -131,12 +132,14 @@ pm2 reload gassien-bo            # Zero-downtime reload
 
 ### Nginx Reverse Proxy
 ```
-External (HTTPS) → Load Balancer
+admin.gassien.com (DNS Gandi : A → 35.181.0.241)
                  ↓
-             Port 80 → Nginx
+   Port 443 → Nginx (TLS Let's Encrypt, X-Forwarded-Proto https)
+   Port 80  → Nginx (301 → HTTPS, sauf /.well-known/acme-challenge/)
                      ↓
                  Port 8080 → Express App
 ```
+Certificat renouvelé automatiquement (`certbot.timer`, webroot `/var/www/letsencrypt`, hook reload Nginx). Config complète : `gassienCalcul/readme.md` → « Configuration Nginx ».
 
 ## Flow de données
 
@@ -470,7 +473,7 @@ Build config dans Webpack (pas de .env)
 - `laruche.js` – La Ruche client config
 - `gemini.json` – Gemini AI credentials
 
-**⚠️ Important** : tous les credentials doivent exister sur la prod (`/var/www/gassien/credentials/` sur 52.47.115.90). Toute mise à jour d'un module qui consomme un nouveau credential doit être précédée du scp du fichier sur le serveur, sinon le boot PM2 plante.
+**⚠️ Important** : tous les credentials doivent exister sur la prod (`/var/www/gassien/credentials/` sur 35.181.0.241). Toute mise à jour d'un module qui consomme un nouveau credential doit être précédée du scp du fichier sur le serveur, sinon le boot PM2 plante.
 
 **AWS Credentials** : `~/.aws/credentials`
 - `[default]` – Dev
@@ -530,7 +533,7 @@ cd ..
 npm run deploy
 
 # 4. IMPORTANT: Reload PM2 pour recharger les CSV
-ssh ubuntu@52.47.115.90
+ssh ubuntu@35.181.0.241
 pm2 reload gassien-bo
 pm2 logs gassien-bo | grep -i "compo\|referential"
 ```
@@ -538,7 +541,7 @@ pm2 logs gassien-bo | grep -i "compo\|referential"
 ### Serveur (SSH)
 
 ```bash
-ssh ubuntu@52.47.115.90
+ssh ubuntu@35.181.0.241
 
 # PM2 commands
 pm2 list
@@ -599,7 +602,7 @@ tail -f /var/log/nginx/error.log
 ### AWS CloudWatch
 - DynamoDB metrics (read/write capacity)
 - S3 access logs
-- Load Balancer health checks
+- Certificat HTTPS : `sudo certbot certificates` (expiration) / `sudo certbot renew --dry-run`
 
 ## Troubleshooting
 
@@ -664,7 +667,7 @@ pm2 logs gassien-bo | grep -i "csv\|compo\|referential"
 
 ## Liens utiles
 
-- **Serveur** : 52.47.115.90
+- **Serveur** : 35.181.0.241
 - **Pool Cognito** : eu-west-1_mX9ktt0u2
 - **S3 Config** : gassien-cmd-config
 - **S3 Invoices** : gassien-invoices-lock
